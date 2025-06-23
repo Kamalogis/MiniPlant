@@ -1,1 +1,2 @@
-# MiniPlan
+# MiniPlant
+
