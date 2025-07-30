@@ -28,9 +28,7 @@ struct OutputState {
   bool filtering_lamp;
   bool backwash_lamp;
   bool drain_lamp;
-  bool stepper_pulse;
-  bool stepper_en;
-  bool stepper_dir;
+  bool stepper;
 };
 
 InputState input;
@@ -48,13 +46,14 @@ bool receiving = false;
 void checkSerial() {
   while (Serial.available()) {
     byte b = Serial.read();
+    Serial.flush();
 
     if (!receiving) {
       if (b == START_BYTE) {
         receiving = true;
         index = 0;
         packet[index++] = b;
-      }
+      } 
     } else {
       packet[index++] = b;
       if (index == PACKET_LENGTH) {
@@ -62,7 +61,7 @@ void checkSerial() {
         processPacket(packet); 
       }
     }
-  }
+  } 
 }
 
 bool validatePacket(byte *pkt) {
@@ -88,11 +87,15 @@ void processPacket(byte *pkt) {
   output.filtering_lamp = bitRead(flags2, 2);
   output.backwash_lamp = bitRead(flags2, 3);
   output.drain_lamp = bitRead(flags2, 4);
-  output.stepper_pulse = bitRead(flags2, 5);
-  output.stepper_en = bitRead(flags2, 6);
-  output.stepper_dir = bitRead(flags2, 7);
+  output.stepper = bitRead(flags2, 5);
 }
 
+void tambah() {
+  input.level_1++;
+  if (input.level_1 > 100) {
+    input.level_1 = 0;
+  }
+}
 
 void data_awal() {
   input.level_1 = 120;
@@ -123,9 +126,7 @@ void data_awal() {
   output.filtering_lamp = false;
   output.backwash_lamp = false;
   output.drain_lamp = true;
-  output.stepper_pulse = true;
-  output.stepper_en = false;
-  output.stepper_dir = false;
+  output.stepper = true;
 }
 
 void packing(){
@@ -169,9 +170,7 @@ void packing(){
   output_flags2 |= output.filtering_lamp << 2;
   output_flags2 |= output.backwash_lamp << 3;
   output_flags2 |= output.drain_lamp << 4;
-  output_flags2 |= output.stepper_pulse << 5;
-  output_flags2 |= output.stepper_en << 6;
-  output_flags2 |= output.stepper_dir << 7;
+  output_flags2 |= output.stepper << 5;
   data[8] = output_flags2;
 
   //======================VALIDASI=========================
@@ -181,7 +180,6 @@ void packing(){
   }
   data[9] = validasi;
 }
-  
 
 void setup() {
   Serial.begin(9600);
@@ -189,8 +187,10 @@ void setup() {
 }
 
 void loop() {
+  tambah();
   packing();
   Serial.write(data, 10);
+  Serial.flush();
   checkSerial();
-  delay(1000);
+  delay(200);
 }
