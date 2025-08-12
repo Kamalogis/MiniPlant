@@ -103,11 +103,34 @@ def process_packet(packet, debug=False):
 def upload_to_database(data):
     #upload data ke database
     try:
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         conn = sqlite3.connect(data_wtp.db)
         c = conn.cursor()
-        c.execute("INSERT INTO monitor_wtp VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (
-            data["id"], 
-            data["timeStamp"], 
+        c.execute("INSERT INTO monitor_wtp (
+        timestamp,
+        level1,
+        level2,
+        tdsValue,
+        flowRate,
+        pressureValue,
+        levelSwitch,
+        mode_standby,
+        mode_filtering,
+        mode_backwash,
+        mode_drain,
+        mode_override,
+        emergency_stop,
+        solenoid1,
+        solenoid2,
+        solenoid3,
+        solenoid4,
+        solenoid5,
+        solenoid6,
+        pump1,
+        pump2,
+        pump3
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (
+            timestamp, 
             data["level1"], 
             data["level2"], 
             data["tdsValue"], 
@@ -219,4 +242,5 @@ if __name__ == "__main__":
         debug = True
 
     main(debug)
+
 
