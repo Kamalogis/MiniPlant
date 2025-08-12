@@ -2,6 +2,7 @@ import serial
 from pymodbus.client import ModbusTcpClient
 from time import sleep
 import sqlite3
+import datetime
 
 #Konstan
 START_BYTE = 0xAA
@@ -243,6 +244,7 @@ if __name__ == "__main__":
         debug = True
 
     main(debug)
+
 
 
 
