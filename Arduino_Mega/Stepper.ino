@@ -20,7 +20,7 @@
 
 // ======================== 1) VARIABEL UTAMA ========================
 static float DESIRED_SPEED_RPM = 60.0f;  // target rpm default
-static float ACCELERATION_RPS2 = 2.0f;   // percepatan (rev/s^2)
+static float ACCELERATION_RPS2 = 0.5f;   // percepatan (rev/s^2)
 static bool  ARAH_CW           = true;   // true=CW, false=CCW
 
 static const float STEPS_PER_REV = 3200.0f; // contoh: 200step * 16 micro
@@ -146,7 +146,7 @@ void stepperService() {
 
     case STEPPER_SOFT_START:
       stepper.run(); // non-blocking
-      if (f_abs(stepper.speed()) >= 0.95f * rpmToSps(DESIRED_SPEED_RPM)) {
+      if (f_abs(stepper.speed()) >= 0.25f * rpmToSps(DESIRED_SPEED_RPM)) {
         stepperState = STEPPER_RUN;
       }
       if (stopRequested) {
@@ -203,5 +203,7 @@ void infoBanner() {
   Serial.println();
   Serial.println(F("=== Stepper SoftStart/SoftStop FSM (No LED) ==="));
   Serial.println(F("Cmd: '1' 60rpm, '2' 120rpm, 't' toggle arah, 'x' soft stop, 'e' emergency, 'r' reset"));
-  Serial.print (F("EN active: ")); Serial.println(STEPPER_EN_ACTIVE);
+  Serial.print (F("EN active: ")); Serial.println(STEPPER_EN_ACTIVE_LOW ? F("LOW") : F("HIGH"));
+  Serial.print (F("STEPS_PER_REV = ")); Serial.println(STEPS_PER_REV);
+  Serial.println();
 }
