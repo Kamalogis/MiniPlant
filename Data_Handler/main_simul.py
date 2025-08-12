@@ -7,10 +7,10 @@ import platform
 #Konstan
 START_BYTE = 0xAA
 PACKET_LENGTH = 10
-SERIAL_PORT = 'COM6'
+SERIAL_PORT = 'COM3'
 BAUDRATE = 9600
-IP_PLC = "127.0.0.1" 
-LOG = True
+IP_PLC = "10.10.17.210" 
+LOG = False
 
 FLAGS_INPUT = [
     "level_switch", "pb_start", "mode_standby", "mode_filtering", "mode_backwash",
@@ -155,7 +155,7 @@ def upload_to_database(data):
 
 def upload_to_plc(data, client, override):
     #upload data ke memory PLC
-    client.write_registers(0, list(data.values())[0:4], slave=1)
+    client.write_registers(0, list(data.values())[0:5], slave=1)
     if override:
         print()
     else:
