@@ -203,4 +203,5 @@ void infoBanner() {
   Serial.println();
   Serial.println(F("=== Stepper SoftStart/SoftStop FSM (No LED) ==="));
   Serial.println(F("Cmd: '1' 60rpm, '2' 120rpm, 't' toggle arah, 'x' soft stop, 'e' emergency, 'r' reset"));
-  Serial.print (F("EN active: ")); Serial.println(STEPPER_EN_ACTIVE
+  Serial.print (F("EN active: ")); Serial.println(STEPPER_EN_ACTIVE);
+}
