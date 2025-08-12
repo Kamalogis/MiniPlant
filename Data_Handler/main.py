@@ -106,7 +106,7 @@ def upload_to_database(data):
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         conn = sqlite3.connect(data_wtp.db)
         c = conn.cursor()
-        c.execute("INSERT INTO monitor_wtp (
+        c.execute("""INSERT INTO monitor_wtp (
         timestamp,
         level1,
         level2,
@@ -129,7 +129,8 @@ def upload_to_database(data):
         pump1,
         pump2,
         pump3
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", 
+        (
             timestamp, 
             data["level1"], 
             data["level2"], 
@@ -154,7 +155,7 @@ def upload_to_database(data):
             data["pump3"]))
         conn.commit()
         conn.close()
-        return print("Data Tersimpan di Database")
+        return print("Data Tersimpan di Database  ", timestamp)
     except:
         print("Terjadi Kesalahan dalam Menyimpan Data")
 
@@ -242,5 +243,6 @@ if __name__ == "__main__":
         debug = True
 
     main(debug)
+
 
 
