@@ -9,14 +9,24 @@
 // setpoints:
 int SETPOINT_ATAS_TANGKI_AGITATOR = 80; // 80 percent
 int SETPOINT_BAWAH_TANGKI_AGITATOR = 20; // 20 percent
+int LEVEL_TANGKI_STORAGE_KOSONG = 5; // 5 percent height for empty storage tank
+
 unsigned long WAKTU_ADUK = 120000; // 2 minutes
 unsigned long WAKTU_ENDAPAN = 180000; // 3 minutes
+
 unsigned long ENDAPAN_LED_ON_TIME = 1000; // led on for 1 s when in ENDAPAN process
 unsigned long ENDAPAN_LED_OFF_TIME = 500; // led off for 0.5 s when in ENDAPAN process
+
 unsigned long EMERGENCY_LED_ON_TIME = 1000; // led on for 1 s when in emergency mode
 unsigned long EMERGENCY_LED_OFF_TIME = 750; // led off for 0.75 s when in emergency mode
+
+unsigned long DRAIN_LED_ON_TIME = 1000; // led on for 1 s when in drain mode
+unsigned long DRAIN_LED_OFF_TIME = 600; // led off for 0.6 s when in drain mode
+
 unsigned long DELAY_POMPA = 2000; // delay when pump is about to be turned on (for safety)
 unsigned long WAKTU_DOSING = 2000; // dosing time
+
+unsigned long JEDA_FILTERING_BERULANG = 10000; // repeat filtering if in 10 s no other command
 
 // Flag to ensure the dosing logic (triggered by millis timing) runs only once per activation,
 // preventing repeated execution during continuous loop cycles.
@@ -26,6 +36,7 @@ bool ENDAPAN_FLAG = true;
 bool FILTERING_FLAG = true;
 bool SOLENOID_BACKWASH_FLAG = true;
 bool EMERGENGY_LAMP_FLAG = true;
+bool FILTERING_BERULANG_FLAG = true;
 
 // global variables
 unsigned long waktu_dosing_mulai = 0;
@@ -34,64 +45,71 @@ unsigned long waktu_endapan_mulai = 0;
 unsigned long waktu_led_endapan_blink = 0;
 unsigned long waktu_led_emergency_blink = 0;
 unsigned long waktu_jeda_pompa_mulai = 0;
-int data_dari_esp = 0;
-int data_ke_esp = 0;
+unsigned long waktu_led_drain_blink = 0;
+unsigned long waktu_jeda_filtering_berulang = 0;
+int data_dari_raspi = 0;
+int data_ke_raspi = 0;
 
 bool kondisi_led_endapan = true;
 bool kondisi_led_emergency = true;
+bool kondisi_led_drain = true;
 
 struct InputState {
-  int level_1;
-  int level_2;
-  int tds_1;
-  int flow_1;
-  int pressure_1;
-  bool level_switch;
-  bool pb_start;
-  bool mode_standby;
-  bool mode_filtering;
-  bool mode_backwash;
-  bool mode_drain;
-  bool mode_override;
-  bool emergency_stop;
+  int level_1 = 0;
+  int level_2 = 0;
+  int tds_1 = 0;
+  int flow_1 = 0;
+  int pressure_1 = 0;
+  bool level_switch = false;
+  bool pb_start = false;
+  bool mode_standby = false;
+  bool mode_filtering = false;
+  bool mode_backwash = false;
+  bool mode_drain = false;
+  bool mode_override = false;
+  bool emergency_stop = false;
 };
 
 struct OutputState {
-  bool solenoid_1;
-  bool solenoid_2;
-  bool solenoid_3;
-  bool solenoid_4;
-  bool solenoid_5;
-  bool solenoid_6;
-  bool pompa_1;
-  bool pompa_2;
-  bool pompa_3;
-  bool standby_lamp;
-  bool filtering_lamp;
-  bool backwash_lamp;
-  bool drain_lamp;
-  bool stepper_pulse;
-  bool stepper_en;
-  bool stepper_dir;
+  bool solenoid_1 = false;
+  bool solenoid_2 = false;
+  bool solenoid_3 = false;
+  bool solenoid_4 = false;
+  bool solenoid_5 = false;
+  bool solenoid_6 = false;
+  bool pompa_1 = false;
+  bool pompa_2 = false;
+  bool pompa_3 = false;
+  bool standby_lamp = false;
+  bool filtering_lamp = false;
+  bool backwash_lamp = false;
+  bool drain_lamp = false;
+  bool stepper_pulse = false;
+  bool stepper_en = false;
+  bool stepper_dir = false;
 };
 
 InputState input;
 OutputState output;
 
-// define I/O pins
-#define LEVEL_1_PIN 10
-#define LEVEL_2_PIN 9
-#define TDS_1_PIN 12
-#define FLOW_1_PIN 11
-#define PRESSURE_1_PIN 13
-#define LEVEL_SWITCH_PIN -1
+// define params for data comm. with raspi
+#define START_BYTE 0xAA
+#define PACKET_LENGTH 10
 
-#define PB_START_PIN -1
-#define MODE_STANDBY_PIN -1
-#define MODE_FILTERING_PIN -1
-#define MODE_BACKWASH_PIN -1
-#define MODE_DRAIN_PIN -1
-#define EMERGENCY_STOP_PIN -1
+// define I/O pins
+#define LEVEL_1_PIN 9
+#define LEVEL_2_PIN 8
+#define TDS_1_PIN 12
+#define FLOW_1_PIN 10
+#define PRESSURE_1_PIN 13
+#define LEVEL_SWITCH_PIN 53
+
+#define PB_START_PIN 42
+#define MODE_STANDBY_PIN 46
+#define MODE_FILTERING_PIN 48
+#define MODE_BACKWASH_PIN 50
+#define MODE_DRAIN_PIN 52
+#define EMERGENCY_STOP_PIN 44
 
 #define SOLENOID_1_PIN 4
 #define SOLENOID_2_PIN 3
@@ -103,14 +121,14 @@ OutputState output;
 #define POMPA_2_PIN 6
 #define POMPA_3_PIN 5
 
-#define STANDBY_LAMP_PIN -1
-#define FILTERING_LAMP_PIN -1
-#define BACKWASH_LAMP_PIN -1
-#define DRAIN_LAMP_PIN -1
+#define STANDBY_LAMP_PIN 22
+#define FILTERING_LAMP_PIN 24
+#define BACKWASH_LAMP_PIN 26
+#define DRAIN_LAMP_PIN 28
 
-#define STEPPER_PULSE_PIN -1
-#define STEPPER_EN_PIN -1
-#define STEPPER_DIR_PIN -1
+#define STEPPER_PULSE_PIN 38
+#define STEPPER_EN_PIN 40
+#define STEPPER_DIR_PIN 36
 
 enum ModeSistem {
   IDLE,
@@ -146,10 +164,17 @@ enum FilteringSubstep {
   FILTER_SELESAI
 };
 
+enum DrainStep{
+  PROSES_IDLE_DRAIN,
+  PROSES_DRAIN,
+  PROSES_DRAIN_SELESAI
+};
+
 ModeSistem ModeSistemAktif = IDLE;
 FilteringStep StepFilteringAktif = PROSES_IDLE;
 BackwashStep StepBackwashAktif = PROSES_IDLE_BACKWASH;
 FilteringSubstep SubFilteringAktif = FILTER_START;
+DrainStep StepDrainAktif = PROSES_IDLE_DRAIN;
 
 void setup() {
   // input
@@ -184,7 +209,7 @@ void setup() {
   pinMode(STEPPER_EN_PIN, OUTPUT);
   pinMode(STEPPER_DIR_PIN, OUTPUT);
 
-  // for esp32 communication
+  // for raspi communication
   Serial1.begin(115200);
 
   // for debug
@@ -196,8 +221,9 @@ void setup() {
 
 void loop() {
   scan_input();
-  baca_data_esp();
+  baca_data_raspi();
   handle_mode_selection();
+  
 
   switch (ModeSistemAktif){
     case IDLE:
@@ -223,7 +249,7 @@ void loop() {
   }
 
   apply_output();
-  kirim_data_esp();
+  kirim_data_raspi();
 }
 
 void scan_input(){
@@ -375,10 +401,16 @@ void mode_filtering(){
           }
           break;
         case FILTER_SELESAI:
-          StepFilteringAktif = PROSES_IDLE;
-          ModeSistemAktif = IDLE;
-          FILTERING_FLAG = true;
-          output.filtering_lamp = false;
+          if(run_once(FILTERING_BERULANG_FLAG)){
+            waktu_jeda_filtering_berulang = millis();
+          }
+          if(millis() - waktu_jeda_filtering_berulang >= JEDA_FILTERING_BERULANG){
+            FILTERING_BERULANG_FLAG = true;
+            // StepFilteringAktif = PROSES_IDLE;
+            ModeSistemAktif = IDLE;
+            FILTERING_FLAG = true;
+            output.filtering_lamp = false;
+          }
           break;
       }
       break;
@@ -472,7 +504,34 @@ void mode_emergency(){
 }
 
 void mode_drain(){
-  
+  switch(StepDrainAktif){ 
+    case PROSES_IDLE_DRAIN:
+      output.drain_lamp = kondisi_led_drain;
+      output.solenoid_1 = true;
+      output.solenoid_2 = true;
+      output.solenoid_3 = true;
+      output.solenoid_4 = true;
+      output.solenoid_5 = true;
+      output.solenoid_6 = true;
+
+      if(input.pb_start){
+        StepDrainAktif = PROSES_DRAIN;
+        waktu_led_drain_blink = millis();
+      }
+      break;  
+
+    case PROSES_DRAIN:
+      output.drain_lamp = blink_led(waktu_led_drain_blink, 1000, 500, kondisi_led_drain);
+      
+      if(input.level_2 <= LEVEL_TANGKI_STORAGE_KOSONG){
+        StepDrainAktif = PROSES_DRAIN_SELESAI;
+      }
+      break;  
+
+    case PROSES_DRAIN_SELESAI:
+      StepDrainAktif = PROSES_IDLE_DRAIN;
+      break;  
+  }
 }
 
 void apply_output(){
@@ -493,12 +552,77 @@ void apply_output(){
   digitalWrite(DRAIN_LAMP_PIN, output.drain_lamp);
 }
 
-void kirim_data_esp(){
-
+uint8_t boolsToByte(bool arr[8]) {
+  uint8_t b = 0;
+  for (int i = 0; i < 8; i++) {
+    if (arr[i]) b |= (1 << i);
+  }
+  return b;
 }
-void baca_data_esp(){
-  data_dari_esp = Serial1.read();
-  if(data_dari_esp == 1){
+
+uint8_t calculateChecksum(uint8_t *packet, int length) {
+  uint8_t checksum = 0;
+  for (int i = 0; i < length - 1; i++) {
+    checksum ^= packet[i];
+  }
+  return checksum;
+}
+
+
+void kirim_data_raspi(){
+  uint8_t packet[PACKET_LENGTH];
+
+  packet[0] = START_BYTE;
+  packet[1] = inputState.level_1;
+  packet[2] = inputState.level_2;
+  packet[3] = inputState.tds_1;
+  packet[4] = inputState.flow_1;
+  packet[5] = inputState.pressure_1;
+
+  bool inputFlags[8] = {
+    inputState.level_switch,
+    inputState.pb_start,
+    inputState.mode_standby,
+    inputState.mode_filtering,
+    inputState.mode_backwash,
+    inputState.mode_drain,
+    inputState.mode_override,
+    inputState.emergency_stop
+  };
+  packet[6] = boolsToByte(inputFlags);
+
+  bool outputFlags1[8] = {
+    outputState.solenoid_1,
+    outputState.solenoid_2,
+    outputState.solenoid_3,
+    outputState.solenoid_4,
+    outputState.solenoid_5,
+    outputState.solenoid_6,
+    outputState.pompa_1,
+    outputState.pompa_2
+  };
+  packet[7] = boolsToByte(outputFlags1);
+
+  bool outputFlags2[8] = {
+    outputState.pompa_3,
+    outputState.standby_lamp,
+    outputState.filtering_lamp,
+    outputState.backwash_lamp,
+    outputState.drain_lamp,
+    outputState.stepper_pulse,
+    outputState.stepper_en,
+    outputState.stepper_dir
+  };
+  packet[8] = boolsToByte(outputFlags2);
+
+  packet[9] = calculateChecksum(packet, PACKET_LENGTH);
+
+  Serial1.write(packet, PACKET_LENGTH);
+}
+
+void baca_data_raspi(){
+  data_dari_raspi = Serial1.read();
+  if(data_dari_raspi == 1){
     input.mode_override = true;
   }
 }
