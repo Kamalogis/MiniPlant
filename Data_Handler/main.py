@@ -1,6 +1,7 @@
 import serial
 from pymodbus.client import ModbusTcpClient
 from time import sleep
+import sqlite3
 
 #Konstan
 START_BYTE = 0xAA
@@ -101,7 +102,38 @@ def process_packet(packet, debug=False):
 
 def upload_to_database(data):
     #upload data ke database
-    return None
+    try:
+        conn = sqlite3.connect(data_wtp.db)
+        c = conn.cursor()
+        c.execute("INSERT INTO monitor_wtp VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (
+            data["id"], 
+            data["timeStamp"], 
+            data["level1"], 
+            data["level2"], 
+            data["tdsValue"], 
+            data["flowRate"], 
+            data["pressureValue"], 
+            data["levelSwitch"], 
+            data["mode_standby"], 
+            data["mode_filtering"], 
+            data["mode_backwash"], 
+            data["mode_drain"], 
+            data["mode_override"], 
+            data["emergency_stop"], 
+            data["solenoid1"], 
+            data["solenoid2"], 
+            data["solenoid3"], 
+            data["solenoid4"], 
+            data["solenoid5"], 
+            data["solenoid6"], 
+            data["pump1"], 
+            data["pump2"], 
+            data["pump3"]))
+        conn.commit()
+        conn.close()
+        return print("Data Tersimpan di Database")
+    except:
+        print("Terjadi Kesalahan dalam Menyimpan Data")
 
 def upload_to_plc(data, client, override):
     #upload data ke memory PLC
@@ -185,4 +217,6 @@ if __name__ == "__main__":
         debug = False
     else:
         debug = True
+
     main(debug)
+
