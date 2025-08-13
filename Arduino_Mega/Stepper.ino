@@ -1,5 +1,4 @@
 /*
-  Stepper_SoftStartSoftStop_FSM_NoLED.ino
   Kontrol stepper (driver STEP/DIR/EN) tanpa delay() dengan FSM:
     IDLE -> SOFT_START -> RUN -> SOFT_STOP -> STOP + EMERGENCY
 
