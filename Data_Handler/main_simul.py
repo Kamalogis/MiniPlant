@@ -1,15 +1,18 @@
 import serial
 from pymodbus.client import ModbusTcpClient
 from time import sleep
+import datetime
+import sqlite3
 import os
 import platform
 
 #Konstan
 START_BYTE = 0xAA
 PACKET_LENGTH = 10
-SERIAL_PORT = 'COM3'
+SERIAL_PORT = 'COM4'
 BAUDRATE = 9600
-IP_PLC = "10.10.17.210" 
+# IP_PLC = "10.10.17.210" 
+IP_PLC = "127.0.0.1" 
 LOG = False
 
 FLAGS_INPUT = [
@@ -53,9 +56,7 @@ bool standby_lamp;      (8:1)
 bool filtering_lamp;    (8:2)
 bool backwash_lamp;     (8:3)
 bool drain_lamp;        (8:4)
-bool stepper_pulse;     (8:5)
-bool stepper_en;        (8:6)
-bool stepper_dir;       (8:7)
+bool stepper;           (8:5)
 """
 
 #================== CONNECTION ==================
@@ -149,9 +150,101 @@ def process_packet(packet, override, debug=False):
     }
 
 #========================== UPLOAD DATA ==========================
+
 def upload_to_database(data):
     #upload data ke database
-    return None
+    try:
+        for i, flag in enumerate(FLAGS_INPUT):
+            data[flag] = data['input_flags'][i]
+        for i, flag in enumerate(FLAGS_OUTPUT):
+            data[flag] = data['output_flags'][i]
+        for i, flag in enumerate(FLAGS_OUTPUT_2):
+            data[flag] = data['output_flags2'][i]
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        conn = sqlite3.connect('data_wtp.db')
+        c = conn.cursor()
+        c.execute("""
+        CREATE TABLE IF NOT EXISTS monitor_wtp (
+            timestamp TEXT,
+            level_1 INTEGER,
+            level_2 INTEGER,
+            tds_1 INTEGER,
+            flow_1 INTEGER,
+            pressure_1 INTEGER,
+            level_switch INTEGER,
+            mode_standby INTEGER,
+            mode_filtering INTEGER,
+            mode_backwash INTEGER,
+            mode_drain INTEGER,
+            mode_override INTEGER,
+            emergency_stop INTEGER,
+            solenoid_1 INTEGER,
+            solenoid_2 INTEGER,
+            solenoid_3 INTEGER,
+            solenoid_4 INTEGER,
+            solenoid_5 INTEGER,
+            solenoid_6 INTEGER,
+            pompa_1 INTEGER,
+            pompa_2 INTEGER,
+            pompa_3 INTEGER,
+            stepper INTEGER
+        )
+        """)
+
+        c.execute("""INSERT INTO monitor_wtp (
+        timestamp,
+        level_1,
+        level_2,
+        tds_1,
+        flow_1,
+        pressure_1,
+        level_switch,
+        mode_standby,
+        mode_filtering,
+        mode_backwash,
+        mode_drain,
+        mode_override,
+        emergency_stop,
+        solenoid_1,
+        solenoid_2,
+        solenoid_3,
+        solenoid_4,
+        solenoid_5,
+        solenoid_6,
+        pompa_1,
+        pompa_2,
+        pompa_3,
+        stepper
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", 
+        (
+            timestamp, 
+            data["level_1"], 
+            data["level_2"], 
+            data["tds_1"], 
+            data["flow_1"], 
+            data["pressure_1"], 
+            data["level_switch"], 
+            data["mode_standby"], 
+            data["mode_filtering"], 
+            data["mode_backwash"], 
+            data["mode_drain"], 
+            data["mode_override"], 
+            data["emergency_stop"], 
+            data["solenoid_1"], 
+            data["solenoid_2"], 
+            data["solenoid_3"], 
+            data["solenoid_4"], 
+            data["solenoid_5"], 
+            data["solenoid_6"], 
+            data["pompa_1"], 
+            data["pompa_2"], 
+            data["pompa_3"],
+            data["stepper"]))
+        conn.commit()
+        conn.close()
+        return print("Data Tersimpan di Database  ", timestamp)
+    except Exception as e:
+        print(f"Terjadi Kesalahan dalam Menyimpan Data: {e}")
 
 def upload_to_plc(data, client, override):
     #upload data ke memory PLC
@@ -202,6 +295,7 @@ def main(debug):
                     packet = ser.read(PACKET_LENGTH)
                     ser.flush()
                     data = process_packet(packet, override_command(plc_client), debug)
+                    print(data["output_flags"])
 
                     if data:
                         upload_to_plc(data, plc_client, override_command(plc_client))

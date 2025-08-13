@@ -1,15 +1,30 @@
 import serial
 from pymodbus.client import ModbusTcpClient
 from time import sleep
-import sqlite3
 import datetime
+import sqlite3
+import os
+import platform
 
 #Konstan
 START_BYTE = 0xAA
 PACKET_LENGTH = 10
-SERIAL_PORT = 'COM6'
+SERIAL_PORT = 'COM4'
 BAUDRATE = 9600
+# IP_PLC = "10.10.17.210" 
 IP_PLC = "127.0.0.1" 
+LOG = False
+
+FLAGS_INPUT = [
+    "level_switch", "pb_start", "mode_standby", "mode_filtering", "mode_backwash",
+    "mode_drain", "mode_override", "emergency_stop" 
+]
+FLAGS_OUTPUT = [
+    "solenoid_1", "solenoid_2", "solenoid_3", "solenoid_4", "solenoid_5", "solenoid_6", "pompa_1", "pompa_2",
+]
+FLAGS_OUTPUT_2= [
+    "pompa_3", "standby_lamp", "filtering_lamp", "backwash_lamp", "drain_lamp", "stepper"
+]
 
 """
 ========INPUT========== ()
@@ -41,11 +56,30 @@ bool standby_lamp;      (8:1)
 bool filtering_lamp;    (8:2)
 bool backwash_lamp;     (8:3)
 bool drain_lamp;        (8:4)
-bool stepper_pulse;     (8:5)
-bool stepper_en;        (8:6)
-bool stepper_dir;       (8:7)
+bool stepper;           (8:5)
 """
 
+#================== CONNECTION ==================
+def connect_serial(port=SERIAL_PORT, baud=BAUDRATE):
+    try:
+        ser = serial.Serial(SERIAL_PORT, BAUDRATE, timeout=1)
+        print("Berhasil terhubung ke port serial")
+        return ser
+    except:
+        print(f"Gagal terhubung ke serial")
+        return False
+
+def connect_PLC(ip=IP_PLC):
+    client = ModbusTcpClient(IP_PLC)
+    if client.connect():
+        print("Berhasil terhubung ke PLC")
+        return client
+    else:
+        print("Gagal terhubung ke PLC")
+        return False
+
+
+#========================== PARSING AND PACKING ==========================
 def parse_flags(flag_byte):
     # byte do data flag
     return [(flag_byte >> i) & 1 for i in range(8)]
@@ -58,14 +92,13 @@ def flags_to_bytes(flags):
     else:
         return False
 
-
 def calculate_checksum(packet):
     checksum = 0
     for byte in packet[:-1]:
         checksum ^= byte
     return checksum
 
-def process_packet(packet, debug=False):
+def process_packet(packet, override, debug=False):
     if len(packet) != PACKET_LENGTH or packet[0] != START_BYTE:
         print("Paket salah: Panjang atau start byte tidak valid")
         return None
@@ -82,14 +115,29 @@ def process_packet(packet, debug=False):
     pressure_1 = packet[5]
     input_flags = parse_flags(packet[6])
     output_flags = parse_flags(packet[7])
-    output_flags2 = parse_flags(packet[8])
+    output_flags2 = (parse_flags(packet[8]))[:6]
+    if not LOG:
+        if platform.system() == "Windows":
+            os.system('cls')
+        else:
+            os.system('clear')
 
-    if debug:
+    if debug == "Simple":
         print("="*40)
         print(f"Level 1: {level_1}, Level 2: {level_2}, TDS: {tds_1}, Flow: {flow_1}, Pressure: {pressure_1}")
         print(f"Input Flags: {input_flags}")
-        print(f"Output Flags: {output_flags}\nOutput Flags2: {output_flags2}\n")
-
+        print(f"Output Flags: {output_flags}\nOutput Flags2: {output_flags2}")
+        print("="*40)
+    elif debug == "All":
+        print("="*40)
+        print(f"Level 1: {level_1}, Level 2: {level_2}, TDS: {tds_1}, Flow: {flow_1}, Pressure: {pressure_1}")
+        for i, flag in enumerate(FLAGS_INPUT):
+            print(f"{flag.ljust(15)} : {'Nyala' if input_flags[i] == 1 else 'Mati'}")
+        for i, flag in enumerate(FLAGS_OUTPUT):
+            print(f"{flag.ljust(15)} : {'Nyala' if output_flags[i] == 1 else 'Mati'}")
+        for i, flag in enumerate(FLAGS_OUTPUT_2):
+            print(f"{flag.ljust(15)} : {'Nyala' if output_flags2[i] == 1 else 'Mati'}")
+        print("="*40)
     return {
         'level_1': level_1,
         'level_2': level_2,
@@ -101,128 +149,168 @@ def process_packet(packet, debug=False):
         'output_flags2': output_flags2
     }
 
+#========================== UPLOAD DATA ==========================
+
 def upload_to_database(data):
     #upload data ke database
     try:
+        for i, flag in enumerate(FLAGS_INPUT):
+            data[flag] = data['input_flags'][i]
+        for i, flag in enumerate(FLAGS_OUTPUT):
+            data[flag] = data['output_flags'][i]
+        for i, flag in enumerate(FLAGS_OUTPUT_2):
+            data[flag] = data['output_flags2'][i]
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        conn = sqlite3.connect(data_wtp.db)
+        conn = sqlite3.connect('data_wtp.db')
         c = conn.cursor()
+        c.execute("""
+        CREATE TABLE IF NOT EXISTS monitor_wtp (
+            timestamp TEXT,
+            level_1 INTEGER,
+            level_2 INTEGER,
+            tds_1 INTEGER,
+            flow_1 INTEGER,
+            pressure_1 INTEGER,
+            level_switch INTEGER,
+            mode_standby INTEGER,
+            mode_filtering INTEGER,
+            mode_backwash INTEGER,
+            mode_drain INTEGER,
+            mode_override INTEGER,
+            emergency_stop INTEGER,
+            solenoid_1 INTEGER,
+            solenoid_2 INTEGER,
+            solenoid_3 INTEGER,
+            solenoid_4 INTEGER,
+            solenoid_5 INTEGER,
+            solenoid_6 INTEGER,
+            pompa_1 INTEGER,
+            pompa_2 INTEGER,
+            pompa_3 INTEGER,
+            stepper INTEGER
+        )
+        """)
+
         c.execute("""INSERT INTO monitor_wtp (
         timestamp,
-        level1,
-        level2,
-        tdsValue,
-        flowRate,
-        pressureValue,
-        levelSwitch,
+        level_1,
+        level_2,
+        tds_1,
+        flow_1,
+        pressure_1,
+        level_switch,
         mode_standby,
         mode_filtering,
         mode_backwash,
         mode_drain,
         mode_override,
         emergency_stop,
-        solenoid1,
-        solenoid2,
-        solenoid3,
-        solenoid4,
-        solenoid5,
-        solenoid6,
-        pump1,
-        pump2,
-        pump3
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", 
+        solenoid_1,
+        solenoid_2,
+        solenoid_3,
+        solenoid_4,
+        solenoid_5,
+        solenoid_6,
+        pompa_1,
+        pompa_2,
+        pompa_3,
+        stepper
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", 
         (
             timestamp, 
-            data["level1"], 
-            data["level2"], 
-            data["tdsValue"], 
-            data["flowRate"], 
-            data["pressureValue"], 
-            data["levelSwitch"], 
+            data["level_1"], 
+            data["level_2"], 
+            data["tds_1"], 
+            data["flow_1"], 
+            data["pressure_1"], 
+            data["level_switch"], 
             data["mode_standby"], 
             data["mode_filtering"], 
             data["mode_backwash"], 
             data["mode_drain"], 
             data["mode_override"], 
             data["emergency_stop"], 
-            data["solenoid1"], 
-            data["solenoid2"], 
-            data["solenoid3"], 
-            data["solenoid4"], 
-            data["solenoid5"], 
-            data["solenoid6"], 
-            data["pump1"], 
-            data["pump2"], 
-            data["pump3"]))
+            data["solenoid_1"], 
+            data["solenoid_2"], 
+            data["solenoid_3"], 
+            data["solenoid_4"], 
+            data["solenoid_5"], 
+            data["solenoid_6"], 
+            data["pompa_1"], 
+            data["pompa_2"], 
+            data["pompa_3"],
+            data["stepper"]))
         conn.commit()
         conn.close()
         return print("Data Tersimpan di Database  ", timestamp)
-    except:
-        print("Terjadi Kesalahan dalam Menyimpan Data")
+    except Exception as e:
+        print(f"Terjadi Kesalahan dalam Menyimpan Data: {e}")
 
 def upload_to_plc(data, client, override):
     #upload data ke memory PLC
-    # client.write_register(0, data['level_1'])
-    # client.write_register(1, data['level_2'])
-    # client.write_register(2, data['tds_1'])
-    # client.write_register(3, data['flow_1'])
-    # client.write_register(4, data['pressure_1'])
-    client.write_registers(0, list(data.values())[0:4])
-    if not override:
-        client.write_coils(0, data['input_flags'], slave=3)
-        client.write_coils(0, data['output_flags'], slave=2)
-        client.write_coils(8, data['output_flags2'], slave=2)
+    client.write_registers(0, list(data.values())[0:5], slave=1)
+    if override:
+        print()
     else:
-        print("Override Command Aktif")
+        client.write_coils(0, data['input_flags'], slave=1)
+        client.write_coils(8, data['output_flags'], slave=1)
+        client.write_coils(16, data['output_flags2'], slave=1)
     return None
 
+
+#========================== OVERRIDE ==========================
 def override_command(client):
     #read memory PLC untuk override
-    return (client.read_coils(16, slave=2).bits)[0]
+    return (client.read_coils(6, slave=2).bits)[0]
 
 def data_plc(client):
-    #read data aktuator dari PLC
-    data = (client.read_coils(0,count=16, slave=2).bits)
+    #read data aktuator dari PLC untuk override
+    data = (client.read_coils(8,count=14, slave=1).bits)
     flag_one, flag_two = flags_to_bytes(data)
-
     packet = bytearray()
     packet.append(0xBB)
     packet.append(flag_one)
     packet.append(flag_two)
+    # print(list(packet))
     return packet
 
+
+#========================== MAIN ==========================
 def main(debug):
-    try:
-        ser = serial.Serial(SERIAL_PORT, BAUDRATE, timeout=1)
-        print("Berhasil terhubung ke port serial")
-    except:
-        print(f"Gagal terhubung ke serial")
-        return
+    ser = connect_serial()
+    if not ser: 
+        print("Tidak dapat melanjutkan tanpa koneksi serial.")
+        return 
 
-    plc_client = ModbusTcpClient(IP_PLC)
-    if plc_client.connect():
-        print("Berhasil terhubung ke PLC")
-    else:
-        print("Gagal terhubung ke PLC")
-
+    plc_client = connect_PLC()
+    if not plc_client:
+        print("Tidak dapat melanjutkan tanpa koneksi PLC.")
+        ser.close() 
+        return 
+    
     try:
         while True:
             try:
                 if ser.in_waiting >= PACKET_LENGTH:
                     packet = ser.read(PACKET_LENGTH)
-                    data = process_packet(packet, debug)
+                    ser.flush()
+                    data = process_packet(packet, override_command(plc_client), debug)
+                    print(data["output_flags"])
 
                     if data:
                         upload_to_plc(data, plc_client, override_command(plc_client))
                         upload_to_database(data)
 
-                        if override_command(plc_client) and data['input_flags'][2]:
-                            print("=== Mode Override Aktif ===")
+                        if override_command(plc_client):
+                            print("================== MODE OVERRIDE AKTIF ==================\n")
                             ser.write(data_plc(plc_client))
+                            ser.flush()
+                        else:
+                            ser.write(0xFF)
+                            ser.flush()
                     else:
                         print("Paket rusak")
 
-                sleep(0.5) 
             except Exception as e:
                 print(f"Error dalam loop: {e}")
                 sleep(1)
@@ -235,16 +323,11 @@ def main(debug):
         print("Koneksi serial dan PLC ditutup")
 
 if __name__ == "__main__":
-    debug_input = input("Debug [Y/n] ? ").strip().lower()
-    if debug_input in ["y",""]:
-        debug = True
-    elif debug_input in ["n"]:
-        debug = False
+    debug_input = input("Debug?  ")
+    if debug_input ==" ":
+        debug_input = "Simple"
+    elif debug_input == "":
+        debug_input = "All"
     else:
-        debug = True
-
-    main(debug)
-
-
-
-
+        debug_input = False
+    main(debug_input)
