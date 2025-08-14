@@ -1,0 +1,582 @@
+.desktop {
+  background-color: #caffd3;
+  display: grid;
+  justify-items: center;
+  align-items: start;
+  width: vw;
+}
+
+.desktop .div {
+  background-color: #caffd3;
+  overflow: hidden;
+  width: 1440px;
+  height: 1024px;
+  position: relative;
+}
+
+.desktop .overlap {
+  position: absolute;
+  width: 1620px;
+  height: 254px;
+  top: -99px;
+  left: -90px;
+}
+
+.desktop .kotak-monitoring {
+  position: absolute;
+  width: 1440px;
+  height: 58px;
+  top: 196px;
+  left: 90px;
+  background-color: #056716;
+}
+
+.desktop .kotak-wtp {
+  position: absolute;
+  width: 1620px;
+  height: 197px;
+  top: 0;
+  left: 0;
+  background-color: #2bb441;
+}
+
+.desktop .title-1 {
+  position: absolute;
+  width: 755px;
+  top: 109px;
+  left: 433px;
+  font-family: "Inter-ExtraBold", Helvetica;
+  font-weight: 800;
+  color: #ffffff;
+  font-size: 47.2px;
+  text-align: center;
+  letter-spacing: 0;
+  line-height: normal;
+}
+
+.desktop .title-monitoring {
+  position: absolute;
+  width: 542px;
+  top: 203px;
+  left: 540px;
+  font-family: "Inter-ExtraBold", Helvetica;
+  font-weight: 800;
+  color: #ffffff;
+  font-size: 33.9px;
+  text-align: center;
+  letter-spacing: 0;
+  line-height: normal;
+}
+
+.desktop .title-2 {
+  position: absolute;
+  width: 148px;
+  top: 166px;
+  left: 736px;
+  font-family: "Inter-Bold", Helvetica;
+  font-weight: 700;
+  color: #ffffff;
+  font-size: 11.3px;
+  text-align: center;
+  letter-spacing: 0;
+  line-height: normal;
+}
+
+.desktop .overlap-dasar {
+  position: absolute;
+  width: 1355px;
+  height: 425px;
+  top: 652px;
+  left: 40px;
+}
+
+.desktop .overlap-dasar2 {
+  position: absolute;
+  width: 1355px;
+  height: 372px;
+  top: 0;
+  left: 0;
+}
+
+.desktop .batas {
+  position: absolute;
+  width: 372px;
+  height: 58px;
+  top: 157px;
+  left: 727px;
+  background-color: #056716;
+  transform: rotate(90.00deg);
+}
+
+.desktop .group {
+  position: absolute;
+  width: 845px;
+  height: 165px;
+  top: 24px;
+  left: 0;
+}
+
+.desktop .group-2 {
+  position: absolute;
+  width: 162px;
+  height: 165px;
+  top: 0;
+  left: 0;
+}
+
+.desktop .rectangle-wrapper {
+  position: absolute;
+  width: 126px;
+  height: 126px;
+  top: 39px;
+  left: 17px;
+  background-color: #1db235;
+  border-radius: 17.08px;
+  box-shadow: 0px 2.73px 2.73px #00000040;
+}
+
+
+
+#indikator-filtering {
+  position: relative;
+  width: 75px;
+  height: 66px;
+  top: 29px;
+  left: 25px;
+  background-color: #a90202;
+  border-radius: 11.62px;
+}
+#indikator-filtering.true {background-color: #3bff00;}
+#indikator-filtering.false {background-color: #ff0000;}
+
+
+#indikator-backwash {
+  position: relative;
+  width: 75px;
+  height: 66px;
+  top: 29px;
+  left: 25px;
+  background-color: #a90202;
+  border-radius: 11.62px;
+}
+#indikator-backwash.true {background-color: #3bff00;}
+#indikator-backwash.false {background-color: #ff0000;}
+
+#indikator-drain {
+  position: relative;
+  width: 75px;
+  height: 66px;
+  top: 29px;
+  left: 25px;
+  background-color: #a90202;
+  border-radius: 11.62px;
+}
+#indikator-drain.true {background-color: #3bff00;}
+#indikator-drain.false {background-color: #ff0000;}
+
+
+#indikator-standby {
+  position: relative;
+  width: 75px;
+  height: 66px;
+  top: 29px;
+  left: 25px;
+  background-color: #a90202;
+  border-radius: 11.62px;
+}
+#indikator-standby.true {background-color: #3bff00;}
+#indikator-standby.false {background-color: #ff0000;}
+
+#indikator-override {
+  position: relative;
+  width: 75px;
+  height: 66px;
+  top: 29px;
+  left: 25px;
+  background-color: #a90202;
+  border-radius: 11.62px;
+}
+#indikator-override.true {background-color: #3bff00;}
+#indikator-override.false {background-color: #ff0000;}
+
+.desktop .indikator-nyala {
+  position: relative;
+  width: 75px;
+  height: 66px;
+  top: 29px;
+  left: 25px;
+  background-color: #3bff00;
+  border-radius: 11.62px;
+}
+
+
+
+.desktop .kotak-emergency {
+  position: absolute;
+  width: 367px;
+  height: 289px;
+  top: 41px;
+  left: 988px;
+  background-color: #1db235;
+  border-radius: 42px;
+  box-shadow: 0px 4px 4px #00000040;
+}
+
+.desktop .text-wrapper-4 {
+  position: absolute;
+  width: 160px;
+  top: 0;
+  left: 0;
+  font-family: "Inter-ExtraBold", Helvetica;
+  font-weight: 800;
+  color: #000000;
+  font-size: 24.4px;
+  text-align: center;
+  letter-spacing: 0;
+  line-height: normal;
+}
+
+.desktop .group-3 {
+  position: absolute;
+  width: 162px;
+  height: 165px;
+  top: 0;
+  left: 171px;
+}
+
+.desktop .group-4 {
+  position: absolute;
+  width: 162px;
+  height: 165px;
+  top: 0;
+  left: 342px;
+}
+
+.desktop .group-5 {
+  position: absolute;
+  width: 162px;
+  height: 165px;
+  top: 0;
+  left: 514px;
+}
+
+.desktop .group-6 {
+  position: absolute;
+  width: 162px;
+  height: 165px;
+  top: 0;
+  left: 685px;
+}
+
+.desktop .text-wrapper-5 {
+  position: absolute;
+  width: 208px;
+  top: 70px;
+  left: 1067px;
+  font-family: "Inter-ExtraBold", Helvetica;
+  font-weight: 800;
+  color: #ffffff;
+  font-size: 27.8px;
+  text-align: center;
+  letter-spacing: 0;
+  line-height: normal;
+}
+
+button {
+  position: absolute;
+  width: 182px;
+  height: 182px;
+  top: 121px;
+  left: 1080px;
+  background-color: #a90202;
+  border-radius: 91.18px;
+  box-shadow: 0px 3.96px 3.96px #00000040;
+  font-family: "Inter-ExtraBold", Helvetica;
+  font-weight: 800;
+  transition: background-color 0.3s;
+  cursor: pointer;
+}
+button:hover:not(:disabled) {
+  background-color: #ff0000 !important;
+}
+
+
+.desktop .emergency {
+  position: absolute;
+  width: 86px;
+  height: 96px;
+  top: 163px;
+  left: 1129px;
+}
+
+.desktop .kamalogis-wrapper {
+  position: absolute;
+  width: 722px;
+  height: 190px;
+  top: 235px;
+  left: 61px;
+  background-color: #ffffff;
+  border-radius: 30px 30px 0px 0px;
+  box-shadow: 0px 4px 4px #00000040;
+}
+
+.desktop .kamalogis {
+  position: absolute;
+  width: 387px;
+  height: 123px;
+  top: 13px;
+  left: 168px;
+  aspect-ratio: 3.17;
+}
+
+.desktop .overlap-3 {
+  position: absolute;
+  width: 1440px;
+  height: 497px;
+  top: 155px;
+  left: 0;
+  overflow: hidden;
+}
+
+.desktop .text-wrapper-6 {
+  position: absolute;
+  width: 542px;
+  top: 447px;
+  left: 191px;
+  font-family: "Inter-ExtraBold", Helvetica;
+  font-weight: 800;
+  color: #ffffff;
+  font-size: 33.9px;
+  text-align: center;
+  letter-spacing: 0;
+  line-height: normal;
+}
+
+.desktop .plant {
+  position: absolute;
+  width: 1440px;
+  height: 452px;
+  top: 0;
+  left: 0;
+  aspect-ratio: 3.19;
+  object-fit: cover;
+}
+
+.tank-agitator {
+  position: absolute;
+  left: 632.2px;
+  top: 154.6px;
+  width: 22px;
+  height: 160px;
+  overflow: hidden;
+}
+
+
+.lv-agitator {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 0%;
+  background-color: rgb(4, 0, 248);
+  border-radius: 3px;
+}
+
+.tank-storage {
+  position: absolute;
+  left: 1302px;
+  top: 154.6px;
+  width: 22px;
+  height: 160px;
+  overflow: hidden;
+}
+
+
+.lv-storage {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 0%;
+  background-color: rgb(4, 0, 248);
+  border-radius: 3px;
+}
+
+
+
+#pump-1 {
+  position: absolute;
+  width: 33px;
+  height: 33px;
+  top: 325px;
+  left: 360px;
+  border-radius: 16.5px;
+  background-color: darkkhaki;
+}
+#pump-1.true {background-color: #3bff00;}
+#pump-1.false {background-color: #a90202;}
+
+#pump-2 {
+  position: absolute;
+  width: 33px;
+  height: 33px;
+  top: 285px;
+  left: 761px;
+  border-radius: 16.5px;
+  background-color: darkturquoise;
+}
+#pump-2.true {background-color: #3bff00;}
+#pump-2.false {background-color: #a90202;}
+
+
+#pump-3{
+  position: absolute;
+  width: 33px;
+  height: 33px;
+  top: 121px;
+  left: 360px;
+  border-radius: 16.5px;
+  background-color: magenta;
+}
+#pump-3.true {background-color: #3bff00;}
+#pump-3.false {background-color: #a90202;}
+
+
+#sv-1 {
+  position: absolute;
+  width: 33px;
+  height: 33px;
+  top: 268px;
+  left: 689px;
+  background-color: #3bff00;
+  border-radius: 16.5px;
+  box-shadow: 0px 4px 9.2px #00000040;
+}
+#sv-1.true {background-color: #3bff00;}
+#sv-1.false {background-color: #a90202;}
+
+#sv-2 {
+  position: absolute;
+  width: 33px;
+  height: 33px;
+  top: 146px;
+  left: 823px;
+  background-color: #ff0000;
+  border-radius: 16.5px;
+  box-shadow: 0px 4px 9.2px #00000040;
+}
+#sv-2.true {background-color: #3bff00;}
+#sv-2.false {background-color: #a90202;}
+
+#sv-3 {
+  position: absolute;
+  width: 33px;
+  height: 33px;
+  top: 43px;
+  left: 1002px;
+  background-color: #ff0000;
+  border-radius: 16.5px;
+  box-shadow: 0px 4px 9.2px #00000040;
+}
+#sv-3.true {background-color: #3bff00;}
+#sv-3.false {background-color: #a90202;}
+
+#sv-4 {
+  position: absolute;
+  width: 33px;
+  height: 33px;
+  top: 318px;
+  left: 822px;
+  background-color: #3bff00;
+  border-radius: 16.5px;
+  box-shadow: 0px 4px 9.2px #00000040;
+}
+#sv-4.true {background-color: #3bff00;}
+#sv-4.false {background-color: #a90202;}
+
+#sv-5{
+  position: absolute;
+  width: 33px;
+  height: 33px;
+  top: 400px;
+  left: 822px;
+  background-color: #3bff00;
+  border-radius: 16.5px;
+  box-shadow: 0px 4px 9.2px #00000040;
+}
+#sv-5.true {background-color: #3bff00;}
+#sv-5.false {background-color: #a90202;}
+
+#sv-6 {
+  position: absolute;
+  width: 33px;
+  height: 33px;
+  top: 383.5px;
+  left: 1213px;
+  background-color: #ff0000;
+  border-radius: 16.5px;
+  box-shadow: 0px 4px 9.2px #00000040;
+}
+#sv-6.true {background-color: #3bff00;}
+#sv-6.false {background-color: #a90202;}
+
+.desktop .batas-2 {
+  position: absolute;
+  width: 1440px;
+  height: 58px;
+  top: 439px;
+  left: 0;
+  background-color: #056716;
+}
+
+.desktop .overlap-group-wrapper {
+  position: absolute;
+  width: 59px;
+  height: 33px;
+  top: 175px;
+  left: 678px;
+}
+
+.desktop .overlap-group-2 {
+  position: relative;
+  width: 57px;
+  height: 33px;
+  background-color: #066816;
+  border-radius: 6.55px;
+}
+
+.desktop .agitator-val {
+  position: absolute;
+  width: 57px;
+  top: 4px;
+  left: 0;
+  font-family: "Inter-ExtraBold", Helvetica;
+  font-weight: 800;
+  color: #ffffff;
+  font-size: 19.3px;
+  text-align: center;
+  letter-spacing: 0;
+  line-height: normal;
+}
+
+.desktop .rectangle-10 {
+  position: absolute;
+  width: 57px;
+  height: 33px;
+  top: 174px;
+  left: 1347px;
+  background-color: #066816;
+  border-radius: 6.55px;
+}
+
+.desktop .storage-val {
+  position: absolute;
+  width: 57px;
+  top: 177px;
+  left: 1347px;
+  font-family: "Inter-ExtraBold", Helvetica;
+  font-weight: 800;
+  color: #ffffff;
+  font-size: 19.3px;
+  text-align: center;
+  letter-spacing: 0;
+  line-height: normal;
+}

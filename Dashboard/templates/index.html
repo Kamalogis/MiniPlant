@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport"/>
+    <meta charset="utf-8" />
+    <script src="{{ url_for('static',filename='js/socket.io.min.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static',filename='css/style.css') }}" />
+  </head>
+
+  <body>
+    <div class="desktop">
+      <div class="div">
+        <div class="overlap">
+          <div class="kotak-monitoring"></div>
+          <div class="kotak-wtp"></div>
+          <div class="title-1">Water Treatment Plant</div>
+          <div class="title-monitoring">Monitoring</div>
+          <div class="title-2">By KAMOGIS 2024/2025</div>
+        </div>
+
+        <div class="overlap-dasar">
+          <div class="overlap-dasar2">
+            <div class="batas"></div>
+
+            <div class="group">
+              <div class="group-2">
+                <div class="rectangle-wrapper">
+                  <div id="indikator-filtering" class="false"></div>
+                </div>
+                <div class="text-wrapper-4">FILTERING</div>
+              </div>
+
+              <div class="group-3">
+                <div class="rectangle-wrapper">
+                  <div id="indikator-backwash" class="false"></div>
+                </div>
+                <div class="text-wrapper-4">BACKWASH</div>
+              </div>
+
+              <div class="group-4">
+                <div class="rectangle-wrapper">
+                  <div id="indikator-drain" class="false"></div>
+                </div>
+                <div class="text-wrapper-4">DRAIN</div>
+              </div>
+
+              <div class="group-5">
+                <div class="rectangle-wrapper">
+                  <div id="indikator-standby" class="false"></div>
+                </div>
+                <div class="text-wrapper-4">STANDBY</div>
+              </div>
+
+              <div class="group-6">
+                <div class="rectangle-wrapper">
+                  <div class="false" id="indikator-override" ></div>
+                </div>
+                <div class="text-wrapper-4">OVERRIDE</div>
+              </div>
+            </div>
+
+            <div class="kotak-emergency"></div>
+            <div class="text-wrapper-5">EMERGENCY</div>
+            <button class="tombol-emergency" data-output="Emergency" onclick="emergency()">
+               <img src="static/assets/emergency.png" alt="Emergency" width="100">
+            </button>
+
+          </div>
+          <div class="kamalogis-wrapper">
+            <img class="kamalogis" src="static/assets/kamalogis.png" /></div>
+        </div>
+
+        <div class="overlap-3">
+          <div class="text-wrapper-6">Status</div>
+          <img class="plant" src="static/assets/plant.png" />
+          <div class="tank-agitator">
+            <div class="lv-agitator" id="lv-agitator"></div>
+          </div>
+          <div class="tank-storage">
+            <div class="lv-storage" id="lv-storage"></div>
+          </div>
+          <div class="false" id="sv-1"></div>
+          <div id="pump-2" class="false"></div>
+          <div id="pump-1" class="false"></div>
+          <div id="pump-3" class="false"></div>
+          <div class="false" id="sv-2"></div>
+          <div class="false" id="sv-3"></div>
+          <div class="false" id="sv-4"></div>
+          <div class="false" id="sv-5"></div>
+          <div class="false" id = "sv-6"></div>
+          <div class="batas-2"></div>
+
+          <div class="overlap-group-wrapper">
+            <div class="overlap-group-2">
+              <div class="agitator-val" id="agitator-val">100%</div>
+            </div>
+          </div>
+
+          <div class="rectangle-10"></div>
+          <div class="storage-val" id="storage-val">100%</div>
+        </div>
+      </div>
+    </div>
+    <script src="{{ url_for('static',filename='js/main.js') }}"></script>
+  </body>
+</html>
