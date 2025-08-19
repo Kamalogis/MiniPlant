@@ -1,4 +1,7 @@
+#include <FlowMeter.h>
+
 /*
+  Stepper_SoftStartSoftStop_FSM_NoLED.ino
   Kontrol stepper (driver STEP/DIR/EN) tanpa delay() dengan FSM:
     IDLE -> SOFT_START -> RUN -> SOFT_STOP -> STOP + EMERGENCY
 
@@ -18,7 +21,7 @@
 #include <AccelStepper.h>
 
 // ======================== 1) VARIABEL UTAMA ========================
-static float DESIRED_SPEED_RPM = 60.0f;  // target rpm default
+static float DESIRED_SPEED_RPM = 200.0f;  // target rpm default (60)
 static float ACCELERATION_RPS2 = 0.5f;   // percepatan (rev/s^2)
 static bool  ARAH_CW           = true;   // true=CW, false=CCW
 
@@ -28,9 +31,9 @@ inline float rps2ToSps2(float a) { return a * STEPS_PER_REV; }             // st
 inline float f_abs(float x) { return x < 0 ? -x : x; }
 
 // ======================== 2) PIN ASSIGNMENT =========================
-#define STEPPER_STEP_PIN 38
-#define STEPPER_DIR_PIN  36
-#define STEPPER_EN_PIN   40
+#define STEPPER_STEP_PIN 38 //8
+#define STEPPER_DIR_PIN  36//9
+#define STEPPER_EN_PIN   40//10
 #define STEPPER_EN_ACTIVE_LOW 1   // 1=EN aktif LOW; 0=EN aktif HIGH
 
 // ======================== 3) FSM DEFINISI ===========================
@@ -145,7 +148,7 @@ void stepperService() {
 
     case STEPPER_SOFT_START:
       stepper.run(); // non-blocking
-      if (f_abs(stepper.speed()) >= 0.25f * rpmToSps(DESIRED_SPEED_RPM)) {
+      if (f_abs(stepper.speed()) >= 0.4f * rpmToSps(DESIRED_SPEED_RPM)) {
         stepperState = STEPPER_RUN;
       }
       if (stopRequested) {
