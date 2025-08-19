@@ -10,7 +10,8 @@
 
 #define FLOW_PIN      2           // INT0 (D2)
 #define FLOW_K        7.5f        // YF-S201: L/min = Hz / 7.5
-#define FLOW_OFFSET   0.60f       // offset kalibrasi opsional
+#define FLOW_OFFSET   -0.1264f       // offset kalibrasi opsional
+#define FLOW_GRADIENT 1.1399
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
@@ -147,7 +148,7 @@ void loop() {
     if (dt_ms > 0) hz = (pulsa * 1000.0f) / (float)dt_ms;
 
     // L/menit dari Hz (dengan offset kalibrasi opsional)
-    debitLpm = (hz / FLOW_K) + FLOW_OFFSET;
+    debitLpm = FLOW_GRADIENT * (hz / FLOW_K) + FLOW_OFFSET;
 
     // Tambah akumulasi liter sesuai interval waktu
     totalLiter += debitLpm * (dt_ms / 60000.0f);
