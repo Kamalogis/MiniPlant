@@ -7,9 +7,11 @@ import platform
 #Konstan
 START_BYTE = 0xAA
 PACKET_LENGTH = 10
-SERIAL_PORT = 'COM3'
-BAUDRATE = 9600
-IP_PLC = "10.10.17.210" 
+# SERIAL_PORT = '/dev/ttyUSB0'
+SERIAL_PORT = '/dev/serial0'
+BAUDRATE = 115200
+# IP_PLC = "10.10.17.210" 
+IP_PLC = "192.168.0.101"
 LOG = False
 
 FLAGS_INPUT = [
@@ -115,6 +117,7 @@ def process_packet(packet, override, debug=False):
     input_flags = parse_flags(packet[6])
     output_flags = parse_flags(packet[7])
     output_flags2 = (parse_flags(packet[8]))[:6]
+
     if not LOG:
         if platform.system() == "Windows":
             os.system('cls')
@@ -205,14 +208,14 @@ def main(debug):
 
                     if data:
                         upload_to_plc(data, plc_client, override_command(plc_client))
-                        upload_to_database(data)
+                        # upload_to_database(data)
 
                         if override_command(plc_client):
                             print("================== MODE OVERRIDE AKTIF ==================\n")
                             ser.write(data_plc(plc_client))
-                            ser.flush()
+                            # ser.flush()
                         else:
-                            ser.write(0xFF)
+                            ser.write(bytes([0xFF]))
                             ser.flush()
                     else:
                         print("Paket rusak")
