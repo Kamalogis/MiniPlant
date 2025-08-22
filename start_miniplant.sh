@@ -11,7 +11,10 @@ fi
 byobu new-session -d -s "miniplant"
 
 # Pane pertama
-byobu send-keys -t "miniplant":0.0 "cd ~/WTP/MiniPlant/Data_Handler" C-m
+byobu send-keys -t "miniplant":0.0 "cd ~/WTP/MiniPlant/Dashboard" C-m
+byobu send-keys -t "miniplant":0.0 "docker start sweet_montalcini" C-m
+byobu send-keys -t "miniplant":0.0 "source venv/bin/activate" C-m
+byobu send-keys -t "miniplant":0.0 "python app.py" C-m
 
 # Split vertikal
 byobu split-window -h -t "miniplant":0.0

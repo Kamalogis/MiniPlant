@@ -13,6 +13,119 @@ BAUDRATE = 115200
 # IP_PLC = "10.10.17.210" 
 IP_PLC = "192.168.0.101"
 LOG = False
+DEBUG = True
+
+"""
+======================================================================================================
+                                        DOKUMENTASI KODE
+======================================================================================================
+1. TUJUAN PROGRAM
+    Program ini digunakan untuk menghubungkan mikrokontroler (via serial) dengan PLC 
+    namun hanya untuk simulasi dengan modbusPoll dengan konfigurasi id 1 untuk memory
+    word, dan id 2 untuk memory bit. program ini bertujuan untuk keperluan monitoring 
+    dan kontrol pada sistem Water Treatment Plant (WTP) by KAMALOGIS, dengan Fungsi:
+        1) Membaca data sensor & status input dari mikrokontroler (serial).
+        2) Menyimpan data ke memory PLC dan ke database SQLite.
+        3) Mendukung mode override, di mana kontrol dilakukan dari PLC dan 
+           bukan dari mikrokontroler.
+
+2. STRKTUR DATA DAN KOMUNIKASI 
+    Struktur Data dari mikrokontroler ke program:
+        Byte ke | Data
+        0       | START_BYTE (0xAA)
+        1       | level_1 (int)
+        2       | level_2 (int)
+        3       | tds_1 (int)
+        4       | flow_1 (int)
+        5       | pressure_1 (int)
+        6       | Input Flags (8 bit)
+        7       | Output Flags (8 bit)
+        8       | Output Flags 2 (8 bit)
+        9       | Checksum (XOR dari byte 0-8)
+
+        Input Flags (byte 6) berisi:
+            level_switch, pb_start, mode_standby, mode_filtering, mode_backwash, 
+            mode_drain, mode_override, emergency_stop.
+
+        Output Flags (byte 7) berisi:
+            solenoid_1 - solenoid_6, pompa_1, pompa_2.
+
+        Output Flags 2 (byte 8) berisi:
+            pompa_3, standby_lamp, filtering_lamp, backwash_lamp, drain_lamp, stepper.
+    
+    Struktur Data dari program ke mikrokontroler:
+        1) Mode Normal (bukan override)
+            Hanya mengirim 1 byte 0xFF dengan fungsi sebagai acknowledge bahwa paket 
+            sudah diterima, serta memberi tahu mikrokontroler untuk lanjut mengirim 
+            data berikutnya.
+
+        2) Mode Override (kontrol dari PLC)
+            Program mengirim 3 byte paket:
+
+            Byte | Isi	    | Keterangan
+            0	 | 0xBB	    | Start byte untuk override
+            1	 | flag_one	| 8 bit pertama hasil pembacaan coil dari PLC
+            2	 | flag_two	| 8 bit kedua hasil pembacaan coil dari PLC
+
+        3) Alur Komunikasi
+        [ Mikrokontroler ]  --(10 byte paket data)-->  [ Program Python ]  
+            ^                                               |
+            |                                               |
+          +--(0xFF jika normal / 0xBB+2 byte jika override)---+
+
+3. FUNGSI-FUNGSI DALAM PROGRAM
+    A) Koneksi
+        1) connect_serial(port, baud)
+            Membuka koneksi serial ke mikrokontroler.
+        2) connect_PLC(ip)
+            Membuka koneksi Modbus TCP ke PLC.
+
+    B) Parsing & Packing
+        1) parse_flags(flag_byte)
+            Memecah satu byte menjadi list bit [b0, b1, ..., b7].
+        2) flags_to_bytes(flags)
+            Menggabungkan list 16 flag menjadi 2 byte.
+        3) calculate_checksum(packet)
+            Hitung checksum dengan XOR.
+        4) process_packet(packet, override, debug)
+            Validasi paket, parsing data sensor & flags, menampilkan ke layar 
+            (mode simple/all), lalu mengembalikan dictionary data.
+
+    C) Upload Data
+        1) upload_to_database(data, client)
+            Menyimpan data ke database SQLite data_wtp.db.
+        2) upload_to_plc(data, client, override)
+            Menulis data sensor dan flags ke PLC (kecuali override aktif).
+
+    D) Override Mode
+        1) override_command(client)
+            Membaca status mode override dari PLC.
+        2) data_plc(client)
+            Membaca status output dari PLC dan membentuk paket untuk dikirim kembali ke mikrokontroler.
+
+    E) Main Loop
+        1. Membaca paket dari serial.
+        2. Parsing dan validasi.
+        3. Upload data ke PLC / database.
+        4. Jika override aktif → kirim data dari PLC ke mikrokontroler.
+        5. Jika override non-aktif → kirim byte 0xFF sebagai ACK.
+
+4. ALUR PROGRAM
+    Buka koneksi serial dan PLC.
+    Loop utama:
+        Cek apakah ada data masuk dari serial (>= 10 byte).
+        Parsing paket → process_packet().
+        Simpan/Upload data:
+            Jika override aktif → mikrokontroler mengikuti PLC.
+            Jika override non-aktif → PLC mengikuti mikrokontroler.
+            Simpan data ke SQLite.
+        Jika ada error, tunggu sebentar lalu lanjutkan loop.
+    Tutup koneksi ketika program dihentikan (Ctrl+C).
+
+======================================================================================================
+
+======================================================================================================
+"""
 
 FLAGS_INPUT = [
     "level_switch", "pb_start", "mode_standby", "mode_filtering", "mode_backwash",
@@ -24,41 +137,6 @@ FLAGS_OUTPUT = [
 FLAGS_OUTPUT_2= [
     "pompa_3", "standby_lamp", "filtering_lamp", "backwash_lamp", "drain_lamp", "stepper"
 ]
-
-"""
-========INPUT========== ()
-int level_1;            (1)
-int level_2;            (2)
-int tds_1;              (3)
-int flow_1;             (4)
-int pressure_1;         (5)
-bool level_switch;      (6:0)
-bool pb_start;          (6:1)
-bool mode_standby;      (6:2)
-bool mode_filtering;    (6:3)
-bool mode_backwash;     (6:4)
-bool mode_drain;        (6:5)
-bool mode_override;     (6:6)
-bool emergency_stop;    (6:7)
-
-========OUTPUT========== (data 7-8)
-bool solenoid_1;        (7:0)
-bool solenoid_2;        (7:1)
-bool solenoid_3;        (7:2)
-bool solenoid_4;        (7:3)
-bool solenoid_5;        (7:4)
-bool solenoid_6;        (7:5)
-bool pompa_1;           (7:6)
-bool pompa_2;           (7:7)
-bool pompa_3;           (8:0)
-bool standby_lamp;      (8:1)
-bool filtering_lamp;    (8:2)
-bool backwash_lamp;     (8:3)
-bool drain_lamp;        (8:4)
-bool stepper_pulse;     (8:5)
-bool stepper_en;        (8:6)
-bool stepper_dir;       (8:7)
-"""
 
 #================== CONNECTION ==================
 def connect_serial(port=SERIAL_PORT, baud=BAUDRATE):
@@ -152,8 +230,101 @@ def process_packet(packet, override, debug=False):
     }
 
 #========================== UPLOAD DATA ==========================
-def upload_to_database(data):
+def upload_to_database(data, client):
     #upload data ke database
+    input_plc = (client.read_coils(0,count=5, slave=2).bits)
+    try:
+        for i, flag in enumerate(FLAGS_INPUT):
+            data[flag] = input_plc[i]
+        for i, flag in enumerate(FLAGS_OUTPUT):
+            data[flag] = data['output_flags'][i]
+        for i, flag in enumerate(FLAGS_OUTPUT_2):
+            data[flag] = data['output_flags2'][i]
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        conn = sqlite3.connect('data_wtp.db')
+        c = conn.cursor()
+        c.execute("""
+        CREATE TABLE IF NOT EXISTS monitor_wtp (
+            timestamp TEXT,
+            level_1 INTEGER,
+            level_2 INTEGER,
+            tds_1 INTEGER,
+            flow_1 INTEGER,
+            pressure_1 INTEGER,
+            level_switch INTEGER,
+            mode_standby INTEGER,
+            mode_filtering INTEGER,
+            mode_backwash INTEGER,
+            mode_drain INTEGER,
+            mode_override INTEGER,
+            emergency_stop INTEGER,
+            solenoid_1 INTEGER,
+            solenoid_2 INTEGER,
+            solenoid_3 INTEGER,
+            solenoid_4 INTEGER,
+            solenoid_5 INTEGER,
+            solenoid_6 INTEGER,
+            pompa_1 INTEGER,
+            pompa_2 INTEGER,
+            pompa_3 INTEGER,
+            stepper INTEGER
+        )
+        """)
+
+        c.execute("""INSERT INTO monitor_wtp (
+        timestamp,
+        level_1,
+        level_2,
+        tds_1,
+        flow_1,
+        pressure_1,
+        level_switch,
+        mode_standby,
+        mode_filtering,
+        mode_backwash,
+        mode_drain,
+        mode_override,
+        emergency_stop,
+        solenoid_1,
+        solenoid_2,
+        solenoid_3,
+        solenoid_4,
+        solenoid_5,
+        solenoid_6,
+        pompa_1,
+        pompa_2,
+        pompa_3,
+        stepper
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", 
+        (
+            timestamp, 
+            data["level_1"], 
+            data["level_2"], 
+            data["tds_1"], 
+            data["flow_1"], 
+            data["pressure_1"], 
+            data["level_switch"], 
+            data["mode_standby"], 
+            data["mode_filtering"], 
+            data["mode_backwash"], 
+            data["mode_drain"], 
+            data["mode_override"], 
+            data["emergency_stop"], 
+            data["solenoid_1"], 
+            data["solenoid_2"], 
+            data["solenoid_3"], 
+            data["solenoid_4"], 
+            data["solenoid_5"], 
+            data["solenoid_6"], 
+            data["pompa_1"], 
+            data["pompa_2"], 
+            data["pompa_3"],
+            data["stepper"]))
+        conn.commit()
+        conn.close()
+        return print("Data Tersimpan di Database  ", timestamp)
+    except Exception as e:
+        print(f"Terjadi Kesalahan dalam Menyimpan Data: {e}")
     return None
 
 def upload_to_plc(data, client, override):
@@ -233,11 +404,4 @@ def main(debug):
         print("Koneksi serial dan PLC ditutup")
 
 if __name__ == "__main__":
-    debug_input = input("Debug?  ")
-    if debug_input ==" ":
-        debug_input = "Simple"
-    elif debug_input == "":
-        debug_input = "All"
-    else:
-        debug_input = False
-    main(debug_input)
+    main(DEBUG)
