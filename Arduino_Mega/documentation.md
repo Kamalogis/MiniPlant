@@ -195,13 +195,12 @@ stateDiagram-v2
 stateDiagram-v2
     [*] --> PROSES_IDLE_BACKWASH
     PROSES_IDLE_BACKWASH --> PROSES_ISI_BACKWASH : PB Start
-    PROSES_ISI_BACKWASH --> PROSES_BACKWASH : level_2 >= setpoint_atas
-    PROSES_BACKWASH --> PROSES_BUANG : t >= WAKTU_BACKWASH
-    PROSES_BUANG --> PROSES_END_BACKWASH : t >= WAKTU_BUANG
+    PROSES_ISI_BACKWASH --> PROSES_BACKWASH : level_1 >= setpoint_atas
+    PROSES_BACKWASH --> PROSES_END_BACKWASH : level_1 <= setpoint_bawah
     PROSES_END_BACKWASH --> PROSES_IDLE_BACKWASH : selesai / reset
 ```
 ---
-## Backwash Sub-Flow
+## Drain Sub-Flow
 ```mermaid
 stateDiagram-v2
     [*] --> PROSES_IDLE_DRAIN
