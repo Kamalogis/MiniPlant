@@ -186,8 +186,29 @@ stateDiagram-v2
         FILTER_START --> FILTER_JALAN : after DELAY_POMPA & level_1 >= setpoint_bawah
         FILTER_JALAN --> FILTER_TUNGGU_MATI_POMPA : level_1 <= setpoint_bawah
         FILTER_TUNGGU_MATI_POMPA --> FILTER_SELESAI : after DELAY_POMPA
-        FILTER_SELESAI --> FILTER_START : PB Start (repeat)  %% or time window if enabled
     }
+    FILTER_SELESAI --> PROSES_FILTER_START : PB Start (repeat)
+```
+---
+## Backwash Sub-Flow
+```mermaid
+stateDiagram-v2
+    [*] --> PROSES_IDLE_BACKWASH
+    PROSES_IDLE_BACKWASH --> PROSES_ISI_BACKWASH : PB Start
+    PROSES_ISI_BACKWASH --> PROSES_BACKWASH : level_2 >= setpoint_atas
+    PROSES_BACKWASH --> PROSES_BUANG : t >= WAKTU_BACKWASH
+    PROSES_BUANG --> PROSES_END_BACKWASH : t >= WAKTU_BUANG
+    PROSES_END_BACKWASH --> PROSES_IDLE_BACKWASH : selesai / reset
+```
+---
+## Backwash Sub-Flow
+```mermaid
+stateDiagram-v2
+    [*] --> PROSES_IDLE_DRAIN
+    PROSES_IDLE_DRAIN --> PROSES_START_DRAIN : PB Start
+    PROSES_START_DRAIN --> PROSES_DRAIN : level_1 >= setpoint_bawah
+    PROSES_DRAIN --> PROSES_END_DRAIN : level_1 <= setpoint_bawah
+    PROSES_END_DRAIN --> PROSES_IDLE_DRAIN : selesai / reset
 ```
 
 ---
