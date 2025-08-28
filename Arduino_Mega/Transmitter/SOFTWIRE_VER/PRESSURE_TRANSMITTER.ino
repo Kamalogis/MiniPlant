@@ -12,8 +12,8 @@
 #define P_MAX_BAR 12.0f
 
 // OLED via Software I2C (pisah dari HW I2C A4/A5)
-#define OLED_SCL_PIN A2
-#define OLED_SDA_PIN A3
+#define OLED_SCL_PIN A3
+#define OLED_SDA_PIN A2
 
 U8G2_SSD1306_128X64_NONAME_F_SW_I2C u8g2(
   U8G2_R0, OLED_SCL_PIN, OLED_SDA_PIN, U8X8_PIN_NONE);
