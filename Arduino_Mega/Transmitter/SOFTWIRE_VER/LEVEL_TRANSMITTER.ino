@@ -3,8 +3,8 @@
 
 #define trigPin        10
 #define echoPin        9
-#define TANK_HEIGHT_CM 35.0f
-#define SLAVE_ADDR     0x12 //0x12 dan 0x13 
+#define TANK_HEIGHT_CM 30.0f
+#define SLAVE_ADDR     0x13 //0x12 dan 0x13 
 #define SPLASH_MS      200
 
 // Posisi/ukuran ikon tangki di OLED
@@ -15,7 +15,7 @@
 
 // OLED via Software I2C (pisah dari HW I2C A4/A5)
 U8G2_SSD1306_128X64_NONAME_F_SW_I2C u8g2(
-  U8G2_R0,  /*clock=*/A2, /*data=*/A3, /*reset=*/U8X8_PIN_NONE
+  U8G2_R0,  /*clock=*/A3, /*data=*/A2, /*reset=*/U8X8_PIN_NONE
 );
 
 unsigned long lastMillis = 0;
@@ -192,7 +192,7 @@ void loop() {
 
     // Payload I2C (kirim distance cm)
     char vbuf[12];
-    dtostrf(distance, 1, 3, vbuf);
+    dtostrf(percent, 1, 3, vbuf);
     noInterrupts();
     snprintf(msg, sizeof(msg), "%s", vbuf);
     interrupts();
