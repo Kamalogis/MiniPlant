@@ -38,7 +38,7 @@ void onRequest() {
 }
 
 // ==== Area nilai (dirty rectangle) ====
-const int VAL_AREA_X = 0;
+const int VAL_AREA_X = 64;
 const int VAL_AREA_Y = 24;      // top area angka
 const int VAL_AREA_W = 128;
 const int VAL_AREA_H = 38;      // cukup utk font 20–24pt + "ppm"
