@@ -7,7 +7,7 @@
 // 6. functions
 
 // for stepper
-#include <AccelStepper.h>
+// #include <AccelStepper.h>
 
 // for I2C
 #include <Wire.h>
@@ -34,8 +34,8 @@ unsigned long WAKTU_ENDAPAN = 5000; // 3 minutes
 unsigned long ENDAPAN_LED_ON_TIME = 500; // led on for 1 s when in ENDAPAN process
 unsigned long ENDAPAN_LED_OFF_TIME = 500; // led off for 0.5 s when in ENDAPAN process
 
-unsigned long EMERGENCY_LED_ON_TIME = 1000; // led on for 1 s when in emergency mode
-unsigned long EMERGENCY_LED_OFF_TIME = 750; // led off for 0.75 s when in emergency mode
+unsigned long EMERGENCY_LED_ON_TIME = 200; // led on for 1 s when in emergency mode
+unsigned long EMERGENCY_LED_OFF_TIME = 200; // led off for 0.75 s when in emergency mode
 
 unsigned long DRAIN_LED_ON_TIME = 1000; // led on for 1 s when in drain mode
 unsigned long DRAIN_LED_OFF_TIME = 600; // led off for 0.6 s when in drain mode
@@ -208,24 +208,39 @@ void setup() {
 
   // output
   pinMode(SOLENOID_1_PIN, OUTPUT);
+  digitalWrite(SOLENOID_1_PIN, HIGH);
   pinMode(SOLENOID_2_PIN, OUTPUT);
+  digitalWrite(SOLENOID_2_PIN, HIGH);
   pinMode(SOLENOID_3_PIN, OUTPUT);
+  digitalWrite(SOLENOID_3_PIN, HIGH);
   pinMode(SOLENOID_4_PIN, OUTPUT);
+  digitalWrite(SOLENOID_4_PIN, HIGH);
   pinMode(SOLENOID_5_PIN, OUTPUT);
+  digitalWrite(SOLENOID_5_PIN, HIGH);
   pinMode(SOLENOID_6_PIN, OUTPUT);
+  digitalWrite(SOLENOID_6_PIN, HIGH);
   pinMode(POMPA_1_PIN, OUTPUT);
+  digitalWrite(POMPA_1_PIN, HIGH);
   pinMode(POMPA_2_PIN, OUTPUT);
+  digitalWrite(POMPA_2_PIN, HIGH);
   pinMode(POMPA_3_PIN, OUTPUT);
+  digitalWrite(POMPA_3_PIN, HIGH);
   pinMode(STEPPER_OUT, OUTPUT);
+  digitalWrite(STEPPER_OUT, HIGH);
   pinMode(STANDBY_LAMP_PIN, OUTPUT);
+  digitalWrite(STANDBY_LAMP_PIN, HIGH);
   pinMode(FILTERING_LAMP_PIN, OUTPUT);
+  digitalWrite(FILTERING_LAMP_PIN, HIGH);
   pinMode(BACKWASH_LAMP_PIN, OUTPUT);
+  digitalWrite(BACKWASH_LAMP_PIN, HIGH);
   pinMode(DRAIN_LAMP_PIN, OUTPUT);
+  digitalWrite(DRAIN_LAMP_PIN, HIGH);
 
   // for raspi communication
   Serial1.begin(115200);
 
   // netralize all outputs
+  delay(100);
   reset_output();
   // debug_relay();
 }
@@ -294,10 +309,10 @@ void loop() {
   apply_output();
   kirim_data_raspi();
   baca_data_raspi();
-  // debug_input();
-  // debug_output();
+  debug_input();
+  debug_output();
   // debugKomunikasiRaspi();
-  delay(10);
+  // delay(10);
 }
 
 void scan_input(){
@@ -689,6 +704,7 @@ void mode_emergency(){
   kondisi_led_emergency = blink_led(waktu_led_emergency_blink, EMERGENCY_LED_ON_TIME, EMERGENCY_LED_OFF_TIME, kondisi_led_emergency);
   output.standby_lamp = kondisi_led_emergency;
   output.filtering_lamp = kondisi_led_emergency;
+  // output.solenoid_1 = kondisi_led_emergency;
   output.backwash_lamp = kondisi_led_emergency;
   output.drain_lamp = kondisi_led_emergency;
 }
@@ -732,7 +748,7 @@ void apply_output(){
   digitalWrite(SOLENOID_4_PIN, !output.solenoid_4);
   digitalWrite(SOLENOID_5_PIN, !output.solenoid_5);
   digitalWrite(SOLENOID_6_PIN, !output.solenoid_6);
-
+  
   digitalWrite(POMPA_1_PIN, !output.pompa_1);
   digitalWrite(POMPA_2_PIN, !output.pompa_2);
   digitalWrite(POMPA_3_PIN, !output.pompa_3);
@@ -742,6 +758,9 @@ void apply_output(){
   digitalWrite(FILTERING_LAMP_PIN, !output.filtering_lamp);
   digitalWrite(BACKWASH_LAMP_PIN, !output.backwash_lamp);
   digitalWrite(DRAIN_LAMP_PIN, !output.drain_lamp);
+  digitalWrite(STEPPER_OUT, !output.stepper);
+
+  delay(50);
 }
 
 uint8_t boolsToByte(bool arr[8]) {
