@@ -7,7 +7,7 @@
 // 6. functions
 
 // for stepper
-// #include <AccelStepper.h>
+#include <AccelStepper.h>
 
 // for I2C
 #include <Wire.h>
@@ -19,16 +19,16 @@
 // quality transmitter 0x14
 uint8_t pressure_transmitter_address = 0x10; // address for pressure transmitter
 uint8_t flow_transmitter_address = 0x11; // address for flow transmitter
-uint8_t level1_transmitter_address = 0x13; // address for level transmitter
+uint8_t level1_transmitter_address = 0x12; // address for level transmitter
 uint8_t level2_transmitter_address = 0x13; // address for level transmitter
 uint8_t quality_transmitter_address = 0x14; // address for quality transmitter
 
 // setpoints:
-int SETPOINT_ATAS_TANGKI_AGITATOR = 70; // 80 percent
+int SETPOINT_ATAS_TANGKI_AGITATOR = 55; // 80 percent
 int SETPOINT_BAWAH_TANGKI_AGITATOR = 20; // 20 percent
 int LEVEL_TANGKI_STORAGE_KOSONG = 5; // 5 percent height for empty storage tank
 
-unsigned long WAKTU_ADUK = 5000; // 2 minutes
+unsigned long WAKTU_ADUK = 10000; // 2 minutes
 unsigned long WAKTU_ENDAPAN = 5000; // 3 minutes
 
 unsigned long ENDAPAN_LED_ON_TIME = 500; // led on for 1 s when in ENDAPAN process
@@ -125,8 +125,8 @@ bool receiving = false;
 #define EMERGENCY_STOP_PIN 6
 #define SOLENOID_1_PIN 9
 #define SOLENOID_2_PIN 7
-#define SOLENOID_3_PIN 5
-#define SOLENOID_4_PIN 3 
+#define SOLENOID_3_PIN 3
+#define SOLENOID_4_PIN 5 
 #define SOLENOID_5_PIN 2
 #define SOLENOID_6_PIN 24
 #define POMPA_1_PIN 28
@@ -240,7 +240,7 @@ void setup() {
   Serial1.begin(115200);
 
   // netralize all outputs
-  delay(100);
+  // delay(100);
   reset_output();
   // debug_relay();
 }
@@ -309,20 +309,23 @@ void loop() {
   apply_output();
   kirim_data_raspi();
   baca_data_raspi();
-  debug_input();
-  debug_output();
+  // debug_input();
+  // debug_output();
   // debugKomunikasiRaspi();
   // delay(10);
 }
 
 void scan_input(){
-  input.level_1    = readTransmitter(level1_transmitter_address);
+  // input.level_1    = readTransmitter(level1_transmitter_address);
   // konversi sementara
   // input.level_1 = 100.0 - (constrain(readTransmitter(level1_transmitter_address), 0, 35) / 35.0 * 100.0);
-  input.level_2    = readTransmitter(level2_transmitter_address);
+  // input.level_2    = readTransmitter(level2_transmitter_address);
   // input.tds_1      = readTransmitter(quality_transmitter_address);
   // input.flow_1     = readTransmitter(flow_transmitter_address);
   // input.pressure_1 = readTransmitter(pressure_transmitter_address);
+
+  input.level_1    = 0;
+  input.level_2    = 0;
   input.tds_1      = 0;
   input.flow_1     = 0;
   input.pressure_1 = 0;
@@ -489,7 +492,7 @@ void mode_filtering(){
       break;
 
     case PROSES_ISI:
-      if(input.level_1 >= SETPOINT_ATAS_TANGKI_AGITATOR){
+      if(input.level_1 >= SETPOINT_ATAS_TANGKI_AGITATOR || input.pb_start){
         output.pompa_1 = false;
         StepFilteringAktif = PROSES_DOSING;
       }
@@ -555,7 +558,7 @@ void mode_filtering(){
           break;
 
         case FILTER_JALAN:
-          if(input.level_1 <= SETPOINT_BAWAH_TANGKI_AGITATOR){
+          if(input.level_1 <= SETPOINT_BAWAH_TANGKI_AGITATOR || input.pb_start){
               waktu_jeda_pompa_mulai = millis();
               output.pompa_2 = false;
               SubFilteringAktif = FILTER_TUNGGU_MATI_POMPA;
@@ -567,9 +570,7 @@ void mode_filtering(){
           if(millis() - waktu_jeda_pompa_mulai >= DELAY_POMPA){
             output.solenoid_1 = false;
             output.solenoid_2 = false;
-            Serial.println("AAAAAAAAAAAAAAAAA");
             output.solenoid_3 = false;
-            Serial.println("BBBBBBBBBBBBBBBBB");
             SubFilteringAktif = FILTER_SELESAI;
           }
           break;
@@ -615,7 +616,7 @@ void mode_backwash(){
       break;
 
     case PROSES_ISI_BACKWASH:
-      if(input.level_1 >= SETPOINT_ATAS_TANGKI_AGITATOR){
+      if(input.level_1 >= SETPOINT_ATAS_TANGKI_AGITATOR || input.pb_start){
         output.pompa_1 = false;
         StepBackwashAktif = PROSES_BUKA_SOLENOID;
       }
@@ -625,7 +626,7 @@ void mode_backwash(){
       if(run_once(SOLENOID_BACKWASH_FLAG)){
         waktu_jeda_pompa_mulai = millis();
         output.solenoid_1 = true;
-        output.solenoid_5 = true;
+        output.solenoid_4 = true;
         output.solenoid_6 = true;
       }
       else if(millis() - waktu_jeda_pompa_mulai >= DELAY_POMPA){
@@ -636,7 +637,7 @@ void mode_backwash(){
       break;
 
     case PROSES_BACKWASH:
-      if(input.level_1 <= SETPOINT_BAWAH_TANGKI_AGITATOR){
+      if(input.level_1 <= SETPOINT_BAWAH_TANGKI_AGITATOR || input.pb_start){
         waktu_jeda_pompa_mulai = millis();
         output.pompa_2 = false;
         StepBackwashAktif = PROSES_TUTUP_SOLENOID;
@@ -835,7 +836,7 @@ void kirim_data_raspi(){
 }
 
 // void baca_data_raspi(){
-//   while (Serial1.available()) {
+//   while (Serial.available()) {
 //     byte b = Serial1.read();
 
 //     if (!receiving) {
